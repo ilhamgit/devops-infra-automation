@@ -1,0 +1,15 @@
+---
+# handlers file for post-install
+- name: Reload Nginx on Redhat
+  service:
+    name: nginx
+    state: reloaded
+    enabled: yes
+  when: ansible_distribution == "RedHat"
+
+- name: Reload Nginx on Ubuntu
+  service:
+     name: nginx
+     state: reloaded
+     enabled: yes
+  when: ansible_distribution == "Ubuntu"

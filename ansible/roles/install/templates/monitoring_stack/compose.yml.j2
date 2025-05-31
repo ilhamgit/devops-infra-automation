@@ -1,0 +1,45 @@
+services:
+  promtail:
+    image: grafana/promtail:3.4
+    container_name: promtail-{{ inventory_hostname }}
+    restart: always
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - /var/log/syslog:/var/log/syslog:ro
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+    command: -config.file=/etc/promtail/promtail-config.yml
+    networks:
+      - monitoring
+    mem_limit: 100m
+    cpus: 0.2
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    container_name: node-exporter-{{ inventory_hostname }}
+    restart: always
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+    mem_limit: 100m
+    cpus: 0.2
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor-{{ inventory_hostname }}
+    restart: always
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+    mem_limit: 100m
+    cpus: 0.2
+
+networks:
+  monitoring:
+    driver: bridge

@@ -1,0 +1,116 @@
+---
+# tasks file for installing infra stack on Ubuntu
+
+- name: Install Docker prerequisites on Ubuntu
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - docker
+    - packages
+
+- name: Add Docker GPG key on Ubuntu
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - docker
+    - repo
+
+- name: Add Docker APT repo on Ubuntu 
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu noble stable"
+    state: present
+    filename: docker
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - docker
+    - repo
+
+- name: Update APT cache before installing Docker
+  apt:
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - docker
+    - packages
+
+- name: Install deployment stack
+  apt:
+    name:
+      - docker-ce={{ docker_ce_version }}
+      - docker-ce-cli={{ docker_ce_cli_version }}
+      - containerd.io={{ containerd_io_version }}
+      - docker-buildx-plugin={{ docker_buildx_plugin_version }}
+      - docker-compose-plugin={{ docker_compose_plugin_version }}
+      - nginx={{ nginx_version }}
+      - openjdk-17-jre={{ jre_version }}
+    state: present
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - docker
+    - packages
+
+- name: Start & enable docker on Ubuntu
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - services
+
+- name: Start & enable nginx on Ubuntu
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+  when: ansible_distribution == "Ubuntu"
+  tags:
+    - services
+
+- name: Dir for monitoring
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0775
+  loop:
+  - "{{ monitoring_dir }}"
+  - "{{ monitoring_dir}}/promtail"
+  tags:
+    - monitoring 
+
+- name: Compose file copy 
+  template:
+     src: monitoring_stack/compose.yml.j2
+     dest: "{{ monitoring_dir }}/compose.yml"
+  tags:
+   - monitoring
+
+- name: Promtail file copy
+  template:
+     src: monitoring_stack/promtail/promtail.yml.j2
+     dest: "{{ monitoring_dir }}/promtail/promtail-config.yml"
+  tags:
+   - monitoring
+
+- name: Copy Nginx config based on host
+  template:
+    src: "nginx/{{ inventory_hostname }}.conf.j2"
+    dest: /etc/nginx/sites-enabled/nginx.conf
+  when: ansible_distribution == "Ubuntu"
+  notify: Reload Nginx on Ubuntu
+  tags:
+    - nginxconfig
+
+- name: Run monitoring stack
+  shell: |
+    docker compose up -d
+  args:
+    chdir: "{{ monitoring_dir }}"

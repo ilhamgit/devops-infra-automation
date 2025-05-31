@@ -1,0 +1,19 @@
+---
+# package_stack
+
+docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
+docker_ce_cli_version: "5:28.1.1-1~ubuntu.24.04~noble"
+containerd_io_version: "1.7.27-1"
+docker_buildx_plugin_version: "0.23.0-1~ubuntu.24.04~noble"
+docker_compose_plugin_version: "2.35.1-1~ubuntu.24.04~noble"
+nginx_version: "1.24.0-2ubuntu7.3"
+jre_version: "17.0.15+6~us1-0ubuntu1~24.04"
+
+monitoring_dir: "/opt/monitoring"
+
+
+
+# loki endpoint
+global_loki_endpoint: "http://172.31.17.35:3100/loki/api/v1/push"
+
+

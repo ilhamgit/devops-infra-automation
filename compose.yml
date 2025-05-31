@@ -1,0 +1,43 @@
+services:
+
+  django:
+    image: $APP_VERSION
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /var/www/html:/var/app/staticfiles
+    networks:
+      - shared
+    ports:
+      - 1000:8000
+    mem_limit: 100m
+    cpus: 0.3
+
+  db:
+    image: mysql:8.0
+    restart: always
+    networks:
+      - shared
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: mydb
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+    mem_limit: 512m
+    cpus: 0.5
+
+volumes:
+  resto_app:
+  db_data:
+
+networks:
+  shared:
+    name: shared
